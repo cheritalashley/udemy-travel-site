@@ -1,5 +1,4 @@
-var gulp = require('gulp'),
-watch = require("gulp-watch"),
+const gulp = require('gulp'),
 postcss = require("gulp-postcss"), 
 autoprefixer = require("autoprefixer"),
 cssvars = require("postcss-simple-vars"),
@@ -7,36 +6,45 @@ nested = require("postcss-nested"),
 cssImport = require("postcss-import"),
 browserSync = require("browser-sync").create();
 
+//refresh html file
+function html(){
+    browserSync.reload();
+}
 
-gulp.task("default", function(){
-    console.log("Horray, Cherita you created a gulp task.");
-});
+//compile css file
+function style(){
+    //where is css file
+    return gulp.src('.app/assets/styles/styles.css')
 
-gulp.task("html", function(){
-    console.log("Something useful for HTML.");
-});
-
-gulp.task("styles", function(){
-    return gulp.src("./app/assets/styles/styles.css")
+    //pass file through css compiler
     .pipe(postcss([cssImport, cssvars, nested, autoprefixer]))
-    .pipe(gulp.dest("./app/temp/styles"));
-});
 
-gulp.task("watch", function(){
+    .on('error', function(errorInfo){
+        console.log("***Error*** " + errorInfo.toString());
+        this.emit('end');
+    })
 
+    //save the compile css
+    .pipe(gulp.dest('./app/temp/styles'))
+
+    //stream changes to browsers
+    .pipe(browserSync.stream())
+};
+
+//watcher
+function watch(){
     browserSync.init({
+        notify: false,
         server: {
             baseDir: "app"
         }
     });
 
-    watch("./app/index.html", function(){
-        browserSync.reload();
-    });
-});
+    gulp.watch('./app/*.html').on('change', html);
 
-gulp.task("watch", function(){
-    watch("./app/assets/styles/**/*.css", function(){
-        gulp.start("styles");
-    });
-});
+    gulp.watch('./app/assets/styles/**/*.css', style);
+};
+
+exports.html = html;
+exports.style=style;
+exports.watch=watch;
